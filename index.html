@@ -2,7 +2,7 @@
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#061523"><title>TANABECKHAM | 3D FOOTBALL</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061523;color:white;font-family:system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#game{position:fixed;inset:0}#menu{position:fixed;inset:0;z-index:20;background:linear-gradient(115deg,#061523f5,#062840c9);display:flex;justify-content:center;align-items:center;text-align:center;padding:24px}#menu h1{font-size:clamp(27px,5vw,64px);font-style:italic;letter-spacing:2px;margin:0;text-shadow:0 4px 25px #000}#menu h1 span{color:#f7d05a}#menu p{font-size:14px;color:#d1e5ed}button{cursor:pointer;touch-action:manipulation;border:0}#start{margin:20px;padding:17px 45px;border-radius:8px;background:#f7cf4c;color:#132032;font-size:20px;font-weight:1000;box-shadow:0 7px 0 #b17d22}#status{font-size:12px;min-height:20px;color:#a9c8d3}#hud{position:fixed;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);z-index:4;background:#081c2adf;padding:8px 20px;border:1px solid #ffffff55;border-radius:0 0 12px 12px;white-space:nowrap;font-size:15px;font-weight:900}#hud strong{color:#f7d05a;font-size:23px}#banner{position:fixed;top:25%;left:0;width:100%;text-align:center;z-index:5;font-weight:1000;font-size:clamp(34px,9vw,90px);font-style:italic;color:#f7d05a;text-shadow:3px 5px #051c2c;pointer-events:none;opacity:0;transition:opacity .2s}#joy{position:fixed;left:22px;bottom:max(18px,env(safe-area-inset-bottom));height:112px;width:112px;border-radius:50%;border:2px solid #c9f4ff88;background:#09273b99;z-index:5;touch-action:none}#knob{position:absolute;left:34px;top:34px;width:40px;height:40px;border-radius:50%;background:#d9f7ffbb;box-shadow:0 0 16px #89d9ff}#actions{position:fixed;right:18px;bottom:max(20px,env(safe-area-inset-bottom));display:flex;align-items:end;gap:12px;z-index:5}#shoot{width:105px;height:105px;border-radius:50%;background:linear-gradient(#ef6a3b,#b92b29);border:3px solid #ffded0;color:white;font-weight:1000;font-size:18px;box-shadow:0 0 22px #e9564077}#dash{width:72px;height:72px;border-radius:50%;background:#173e65;border:2px solid #8bc6f5;color:white;font-weight:900}#meter{position:fixed;right:20px;bottom:135px;width:104px;height:8px;border-radius:8px;background:#ffffff55;z-index:5;overflow:hidden}#power{height:100%;width:0;background:#ffd04b}#hint{position:fixed;top:12px;left:14px;z-index:4;font-size:11px;color:#c6e8ef}#error{color:#ffb8a8}#rotate{display:none}@media(orientation:portrait){#rotate{display:block;position:fixed;bottom:150px;left:0;width:100%;text-align:center;color:#d6e5ef;font-size:12px;pointer-events:none}#hint{display:none}}
-</style></head><body><div id="game"></div><div id="hint">TANABECKHAM / STADIUM EDITION</div><div id="hud">GOALS <strong id="score">0</strong>　 TIME <strong id="time">60</strong></div><div id="banner">GOOOAL!</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="dash">DASH</button><button id="shoot">SHOOT</button></div><div id="meter"><div id="power"></div></div><div id="rotate">横向きがおすすめです（縦向きでも操作できます）</div><div id="menu"><div><h1>TANABECKHAM<br><span>3D FOOTBALL</span></h1><p>THE LEGEND BEGINS — STADIUM EDITION</p><button id="start">KICK OFF ⚽</button><div id="status">読み込み中…</div><p>左：移動 ／ DASH：加速 ／ SHOOT：長押しで強烈なシュート</p></div></div>
+</style></head><body><div id="game"></div><div id="hint">TANABECKHAM / LOW POLY EDITION</div><div id="hud">GOALS <strong id="score">0</strong>　 TIME <strong id="time">60</strong></div><div id="banner">GOOOAL!</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="dash">DASH</button><button id="shoot">SHOOT</button></div><div id="meter"><div id="power"></div></div><div id="rotate">横向きがおすすめです（縦向きでも操作できます）</div><div id="menu"><div><h1>TANABECKHAM<br><span>3D FOOTBALL</span></h1><p>THE LEGEND BEGINS — STADIUM EDITION</p><button id="start">KICK OFF ⚽</button><div id="status">読み込み中…</div><p>左：移動 ／ DASH：加速 ／ SHOOT：長押しで強烈なシュート</p></div></div>
 <script type="module">
 const $=id=>document.getElementById(id);
 let THREE,scene,camera,renderer,player,ball,keeper,shadow,goalNet,defenders=[],teammates=[],particles=[],spotlights=[],clock=0,active=false,score=0,time=60,moveX=0,moveY=0,dashing=false,charge=0,charging=false,shot=null,last=performance.now(),flash=0,canShoot=true,playerParts=[],keeperParts=[];
@@ -10,7 +10,57 @@ function status(t){$('status').textContent=t}
 function banner(t){$('banner').textContent=t;$('banner').style.opacity=1;flash=1.1}
 function geomBox(w,h,d,color,rough=.7){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:rough}));m.castShadow=true;m.receiveShadow=true;return m}
 function cylinder(r1,r2,h,color){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,12),new THREE.MeshStandardMaterial({color,roughness:.75}));o.castShadow=true;return o}
-function makePerson(blue){const g=new THREE.Group(),skin=0xc58c69,kit=blue?0x1658d4:0xf5b92e;function ell(w,h,d,color,x,y,z,parent=g){let m=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),new THREE.MeshStandardMaterial({color,roughness:.72}));m.scale.set(w,h,d);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}function tube(a,b,r1,r2,color,parent=g){let d=new THREE.Vector3().subVectors(new THREE.Vector3(...b),new THREE.Vector3(...a));let m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,d.length(),12),new THREE.MeshStandardMaterial({color,roughness:.8}));m.position.copy(new THREE.Vector3(...a).add(new THREE.Vector3(...b)).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.castShadow=true;parent.add(m);return m}ell(.45,.57,.26,kit,0,1.74,0);ell(.41,.23,.27,blue?0xfafafa:0x192c41,0,1.18,0);tube([0,2.18,0],[0,2.39,0],.14,.14,skin);ell(.29,.36,.27,skin,0,2.62,0);ell(.30,.15,.28,0x181a21,0,2.87,.01);ell(.09,.09,.055,skin,-.29,2.61,0);ell(.09,.09,.055,skin,.29,2.61,0);for(let x of [-.13,.13]){ell(.027,.029,.018,0x171c25,x,2.64,-.262);ell(.055,.026,.025,0x24262d,x,2.73,-.247)}if(blue){for(let x of [-.145,.145]){let lens=ell(.14,.092,.028,0x161b27,x,2.65,-.29);lens.material.transparent=true;lens.material.opacity=.87}tube([-.02,2.65,-.31],[.02,2.65,-.31],.023,.023,0x141821)}ell(.09,.04,.025,0x6c4436,0,2.48,-.267);let limbs=[];for(let x of [-1,1]){let leg=new THREE.Group();leg.position.set(x*.235,1.16,0);tube([0,0,0],[0,-.41,0],.16,.125,skin,leg);tube([0,-.36,0],[0,-.83,0],.13,.10,blue?0xffffff:0x172f48,leg);ell(.16,.115,.29,0x121820,0,-.86,-.13,leg);g.add(leg);limbs.push(leg);let arm=new THREE.Group();arm.position.set(x*.43,2.05,0);tube([0,0,0],[x*.07,-.36,0],.15,.115,kit,arm);tube([x*.07,-.36,0],[x*.09,-.68,0],.115,.085,skin,arm);ell(.105,.12,.09,skin,x*.09,-.72,0,arm);g.add(arm);limbs.push(arm)}let cvs=document.createElement('canvas');cvs.width=128;cvs.height=128;let cx=cvs.getContext('2d');cx.fillStyle='#ffffff';cx.font='bold 96px Arial';cx.textAlign='center';cx.fillText(blue?'10':'1',64,98);let tex=new THREE.CanvasTexture(cvs);let number=new THREE.Mesh(new THREE.PlaneGeometry(.36,.39),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide}));number.position.set(0,1.75,.266);g.add(number);g.userData.limbs=limbs;return g}
+function makePerson(blue){
+ const g=new THREE.Group(), skin=0xd7a17d, shirt=blue?0x1465dc:0xeeb72b, shorts=blue?0xf7f9fc:0x192a39, sock=blue?0xf5f7fa:0x283d53;
+ const mat=(c,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:.68,metalness:metal,flatShading:true});
+ const materials={skin:mat(skin),shirt:mat(shirt),shorts:mat(shorts),sock:mat(sock),hair:mat(0x1b1b23),boot:mat(0x111923),white:mat(0xffffff),trim:mat(blue?0xe9f6ff:0x101d33),glass:mat(0x19222b)};
+ function mesh(geo,m,x,y,z,parent=g){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+ function part(top,bottom,h,m,x,y,z,parent=g){return mesh(new THREE.CylinderGeometry(top,bottom,h,8,1),m,x,y,z,parent)}
+ function ell(rx,ry,rz,m,x,y,z,parent=g){let o=mesh(new THREE.IcosahedronGeometry(1,1),m,x,y,z,parent);o.scale.set(rx,ry,rz);return o}
+ function limb(parent,p1,p2,r1,r2,m){let v1=new THREE.Vector3(...p1),v2=new THREE.Vector3(...p2),d=v2.clone().sub(v1);let o=mesh(new THREE.CylinderGeometry(r1,r2,d.length(),8),m,0,0,0,parent);o.position.copy(v1).add(v2).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
+ // Athletic tapered jersey, collar and shoulder panels
+ let torso=part(.42,.32,.91,materials.shirt,0,1.73,0);torso.scale.z=.7;
+ part(.18,.19,.13,materials.trim,0,2.23,0).scale.z=.83;
+ let pelvis=part(.31,.35,.34,materials.shorts,0,1.17,0);pelvis.scale.z=.85;
+ ell(.14,.17,.14,materials.skin,0,2.3,0);
+ let face=ell(.265,.34,.235,materials.skin,0,2.65,0);
+ ell(.27,.14,.238,materials.hair,0,2.91,.02);
+ let fringe=ell(.25,.075,.23,materials.hair,0,2.87,-.08);
+ // Eyes, eyebrows and nose on front (-Z)
+ for(let x of [-.11,.11]){
+  ell(.047,.025,.016,materials.hair,x,2.68,-.226);
+  ell(.05,.014,.018,materials.hair,x,2.76,-.21);
+  if(blue){let frame=mesh(new THREE.TorusGeometry(.105,.017,6,12),materials.glass,x,2.68,-.239);frame.scale.y=.72;}
+ }
+ ell(.065,.092,.065,materials.skin,0,2.59,-.225);
+ let mouth=mesh(new THREE.BoxGeometry(.10,.018,.014),mat(0x704d42),0,2.49,-.215);
+ if(blue)mesh(new THREE.BoxGeometry(.09,.02,.02),materials.glass,0,2.68,-.25);
+ // Textured jersey badge and visible rear number
+ let c=document.createElement('canvas');c.width=128;c.height=128;let ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.font='900 96px Arial';ctx.textAlign='center';ctx.fillText(blue?'10':'1',64,96);let numberMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,side:THREE.DoubleSide});
+ mesh(new THREE.PlaneGeometry(.36,.39),numberMat,0,1.72,.233);
+ mesh(new THREE.PlaneGeometry(.36,.39),numberMat,0,1.72,-.233);
+ for(let side of [-1,1]){
+  mesh(new THREE.BoxGeometry(.09,.65,.012),materials.trim,side*.30,1.72,-.215);
+ }
+ const limbs=[];
+ for(let side of [-1,1]){
+  const leg=new THREE.Group();leg.position.set(side*.21,1.05,0);
+  limb(leg,[0,.04,0],[side*.015,-.38,0],.17,.13,materials.shorts);
+  ell(.145,.17,.14,materials.skin,side*.015,-.36,0,leg);
+  limb(leg,[side*.015,-.39,0],[side*.02,-.84,0],.13,.095,materials.sock);
+  ell(.17,.11,.30,materials.boot,side*.02,-.85,-.12,leg);
+  mesh(new THREE.BoxGeometry(.29,.025,.24),materials.white,side*.02,-.9,-.15,leg);
+  g.add(leg);limbs.push(leg);
+  const arm=new THREE.Group();arm.position.set(side*.40,2.08,0);
+  ell(.21,.19,.20,materials.shirt,side*.055,-.11,0,arm);
+  limb(arm,[side*.06,-.16,0],[side*.14,-.42,0],.13,.105,materials.shirt);
+  limb(arm,[side*.14,-.42,0],[side*.15,-.72,-.025],.105,.085,materials.skin);
+  ell(.11,.14,.09,materials.skin,side*.15,-.78,-.025,arm);
+  g.add(arm);limbs.push(arm);
+ }
+ g.userData.limbs=limbs;
+ return g;
+}
 function line(points){let geo=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0],.025,p[1])));let m=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0xffffff}));scene.add(m)}
 function fieldMark(x1,z1,x2,z2){let dx=x2-x1,dz=z2-z1,l=Math.hypot(dx,dz),mesh=geomBox(l,.025,.095,0xf3fff5);mesh.position.set((x1+x2)/2,.035,(z1+z2)/2);mesh.rotation.y=-Math.atan2(dz,dx);scene.add(mesh)}
 function build(){scene=new THREE.Scene();scene.background=new THREE.Color(0x77a9c6);scene.fog=new THREE.Fog(0x7da5b5,140,260);camera=new THREE.PerspectiveCamera(67,innerWidth/innerHeight,.1,350);renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.55;$('game').appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xe0f5ff,0x204225,2.4));let sun=new THREE.DirectionalLight(0xfff4d6,3.1);sun.position.set(-25,48,35);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;scene.add(sun);
