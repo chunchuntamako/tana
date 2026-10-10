@@ -2,7 +2,7 @@
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#061523"><title>TANABECKHAM | 3D FOOTBALL</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061523;color:white;font-family:system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#game{position:fixed;inset:0}#menu{position:fixed;inset:0;z-index:20;background:linear-gradient(115deg,#061523f5,#062840c9);display:flex;justify-content:center;align-items:center;text-align:center;padding:24px}#menu h1{font-size:clamp(27px,5vw,64px);font-style:italic;letter-spacing:2px;margin:0;text-shadow:0 4px 25px #000}#menu h1 span{color:#f7d05a}#menu p{font-size:14px;color:#d1e5ed}button{cursor:pointer;touch-action:manipulation;border:0}#start{margin:20px;padding:17px 45px;border-radius:8px;background:#f7cf4c;color:#132032;font-size:20px;font-weight:1000;box-shadow:0 7px 0 #b17d22}#status{font-size:12px;min-height:20px;color:#a9c8d3}#hud{position:fixed;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);z-index:4;background:#081c2adf;padding:8px 20px;border:1px solid #ffffff55;border-radius:0 0 12px 12px;white-space:nowrap;font-size:15px;font-weight:900}#hud strong{color:#f7d05a;font-size:23px}#banner{position:fixed;top:25%;left:0;width:100%;text-align:center;z-index:5;font-weight:1000;font-size:clamp(34px,9vw,90px);font-style:italic;color:#f7d05a;text-shadow:3px 5px #051c2c;pointer-events:none;opacity:0;transition:opacity .2s}#joy{position:fixed;left:22px;bottom:max(18px,env(safe-area-inset-bottom));height:112px;width:112px;border-radius:50%;border:2px solid #c9f4ff88;background:#09273b99;z-index:5;touch-action:none}#knob{position:absolute;left:34px;top:34px;width:40px;height:40px;border-radius:50%;background:#d9f7ffbb;box-shadow:0 0 16px #89d9ff}#actions{position:fixed;right:18px;bottom:max(20px,env(safe-area-inset-bottom));display:flex;align-items:end;gap:12px;z-index:5}#shoot{width:105px;height:105px;border-radius:50%;background:linear-gradient(#ef6a3b,#b92b29);border:3px solid #ffded0;color:white;font-weight:1000;font-size:18px;box-shadow:0 0 22px #e9564077}#pass{width:72px;height:72px;border-radius:50%;background:#217e9c;border:2px solid #d5faff;color:white;font-weight:900}#dash{width:72px;height:72px;border-radius:50%;background:#173e65;border:2px solid #8bc6f5;color:white;font-weight:900}#meter{position:fixed;right:20px;bottom:135px;width:104px;height:8px;border-radius:8px;background:#ffffff55;z-index:5;overflow:hidden}#power{height:100%;width:0;background:#ffd04b}#hint{position:fixed;top:12px;left:14px;z-index:4;font-size:11px;color:#c6e8ef}#error{color:#ffb8a8}#rotate{display:none}@media(orientation:portrait){#rotate{display:block;position:fixed;bottom:150px;left:0;width:100%;text-align:center;color:#d6e5ef;font-size:12px;pointer-events:none}#hint{display:none}}
-</style></head><body><div id="game"></div><div id="hint">TANABECKHAM / CHARACTER REBUILD v0.2</div><div id="hud">BLUE <strong id="score">0</strong> - 0 YELLOW　 TIME <strong id="time">60</strong></div><div id="banner">GOOOAL!</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="pass">PASS</button><button id="dash">DASH</button><button id="shoot">SHOOT</button></div><div id="meter"><div id="power"></div></div><div id="rotate">横向きがおすすめです（縦向きでも操作できます）</div><div id="menu"><div><h1>TANABECKHAM<br><span>3D FOOTBALL</span></h1><p>CHARACTER REBUILD v0.2 — 3D試作（リアルモデルは制作中）</p><button id="start">KICK OFF ⚽</button><div id="status">読み込み中…</div><p>左：移動 ／ PASS：味方にパス ／ DASH：加速 ／ SHOOT：長押し</p></div></div>
+</style></head><body><div id="game"></div><div id="hint">TANABECKHAM / CHARACTER REBUILD v0.3</div><div id="hud">BLUE <strong id="score">0</strong> - 0 YELLOW　 TIME <strong id="time">60</strong></div><div id="banner">GOOOAL!</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="pass">PASS</button><button id="dash">DASH</button><button id="shoot">SHOOT</button></div><div id="meter"><div id="power"></div></div><div id="rotate">横向きがおすすめです（縦向きでも操作できます）</div><div id="menu"><div><h1>TANABECKHAM<br><span>3D FOOTBALL</span></h1><p>CHARACTER REBUILD v0.2 — 3D試作（手作業メッシュ改良版）</p><button id="start">KICK OFF ⚽</button><div id="status">読み込み中…</div><p>左：移動 ／ PASS：味方にパス ／ DASH：加速 ／ SHOOT：長押し</p></div></div>
 <script type="module">
 const $=id=>document.getElementById(id);
 let THREE,scene,camera,renderer,player,ball,keeper,shadow,goalNet,defenders=[],teammates=[],particles=[],spotlights=[],clock=0,active=false,score=0,time=60,moveX=0,moveY=0,dashing=false,charge=0,charging=false,passTarget=null,shot=null,last=performance.now(),flash=0,canShoot=true,playerParts=[],keeperParts=[];
@@ -11,50 +11,86 @@ function banner(t){$('banner').textContent=t;$('banner').style.opacity=1;flash=1
 function geomBox(w,h,d,color,rough=.7){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:rough}));m.castShadow=true;m.receiveShadow=true;return m}
 function cylinder(r1,r2,h,color){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,12),new THREE.MeshStandardMaterial({color,roughness:.75}));o.castShadow=true;return o}
 function makePerson(blue){
- const g=new THREE.Group(), skin=0xd7a17d, shirt=blue?0x1465dc:0xeeb72b, shorts=blue?0xf7f9fc:0x192a39, sock=blue?0xf5f7fa:0x283d53;
- const mat=(c,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:.68,metalness:metal,flatShading:false});
- const materials={skin:mat(skin),shirt:mat(shirt),shorts:mat(shorts),sock:mat(sock),hair:mat(0x1b1b23),boot:mat(0x111923),white:mat(0xffffff),trim:mat(blue?0xe9f6ff:0x101d33),glass:mat(0x19222b)};
- function mesh(geo,m,x,y,z,parent=g){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
- function part(top,bottom,h,m,x,y,z,parent=g){return mesh(new THREE.CylinderGeometry(top,bottom,h,20,1),m,x,y,z,parent)}
- function ell(rx,ry,rz,m,x,y,z,parent=g){let o=mesh(new THREE.SphereGeometry(1,20,14),m,x,y,z,parent);o.scale.set(rx,ry,rz);return o}
- function limb(parent,p1,p2,r1,r2,m){let v1=new THREE.Vector3(...p1),v2=new THREE.Vector3(...p2),d=v2.clone().sub(v1);let o=mesh(new THREE.CylinderGeometry(r1,r2,d.length(),16),m,0,0,0,parent);o.position.copy(v1).add(v2).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
- // Athletic tapered jersey, collar and shoulder panels
- let torso=part(.42,.32,.91,materials.shirt,0,1.73,0);torso.scale.z=.7;
- part(.18,.19,.13,materials.trim,0,2.23,0).scale.z=.83;
- let pelvis=part(.31,.35,.34,materials.shorts,0,1.17,0);pelvis.scale.z=.85;
- ell(.14,.17,.14,materials.skin,0,2.3,0);
- let face=ell(.265,.34,.235,materials.skin,0,2.65,0);
- ell(.27,.14,.238,materials.hair,0,2.91,.02);
- let fringe=ell(.25,.075,.23,materials.hair,0,2.87,-.08);
- // Eyes, eyebrows and nose on front (-Z)
- for(let x of [-.11,.11]){
-  ell(.047,.025,.016,materials.hair,x,2.68,-.226);
-  ell(.05,.014,.018,materials.hair,x,2.76,-.21);
-  if(blue){let frame=mesh(new THREE.TorusGeometry(.105,.017,6,12),materials.glass,x,2.68,-.239);frame.scale.y=.72;}
+ const g=new THREE.Group(),limbs=[];
+ const mat=(c,rough=.8,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
+ const skin=mat(0xb98364),skinLight=mat(0xc99371),hair=mat(0x171a1d),shirt=mat(blue?0x1155c6:0xe5b12b,.65),shorts=mat(blue?0xf1f3f5:0x202b37),sock=mat(blue?0x1646ad:0xe8b72e),boot=mat(0x10161d,.45),white=mat(0xf4f5f6),dark=mat(0x24232a),glass=mat(0x0a131c,.3),lens=new THREE.MeshPhysicalMaterial({color:0xb4d9e8,transparent:true,opacity:.22,roughness:.08,metalness:0,depthWrite:false});
+ function add(geo,m,x,y,z,parent=g){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+ function ell(x,y,z,rx,ry,rz,m,parent=g){const o=add(new THREE.SphereGeometry(1,24,18),m,x,y,z,parent);o.scale.set(rx,ry,rz);return o}
+ function cyl(x,y,z,r1,r2,h,m,parent=g){return add(new THREE.CylinderGeometry(r1,r2,h,20),m,x,y,z,parent)}
+ function box(x,y,z,w,h,d,m,parent=g){return add(new THREE.BoxGeometry(w,h,d),m,x,y,z,parent)}
+ function line3(a,b,r,m,parent=g){const v=new THREE.Vector3(...a),w=new THREE.Vector3(...b),d=w.clone().sub(v);const o=add(new THREE.CylinderGeometry(r,r,d.length(),10),m,0,0,0,parent);o.position.copy(v.add(w).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
+ // Tailored jersey: tapered torso with curved shoulders and fabric folds
+ const body=cyl(0,1.71,0,.39,.32,.92,shirt);body.scale.z=.70;
+ ell(0,2.08,0,.405,.16,.265,shirt);
+ cyl(0,1.23,0,.31,.32,.34,shorts).scale.z=.78;
+ cyl(0,2.23,0,.115,.12,.13,skin);
+ ell(0,2.61,0,.235,.315,.222,skin);
+ // ears, cheekbones, jaw and subtle nose geometry
+ for(const side of [-1,1]){
+  ell(side*.237,2.59,.005,.055,.102,.052,skinLight);
+  ell(side*.142,2.54,-.164,.091,.079,.053,skinLight);
  }
- ell(.065,.092,.065,materials.skin,0,2.59,-.225);
- let mouth=mesh(new THREE.BoxGeometry(.10,.018,.014),mat(0x704d42),0,2.49,-.215);
- if(blue){mesh(new THREE.BoxGeometry(.09,.02,.02),materials.glass,0,2.68,-.25);for(let side of [-1,1]){let temple=mesh(new THREE.BoxGeometry(.18,.018,.019),materials.glass,side*.265,2.685,-.10);temple.rotation.y=side*.55;}}
- // Textured jersey badge and visible rear number
- let c=document.createElement('canvas');c.width=128;c.height=128;let ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.font='900 96px Arial';ctx.textAlign='center';ctx.fillText(blue?'10':'1',64,96);let numberMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,side:THREE.DoubleSide});
- mesh(new THREE.PlaneGeometry(.36,.39),numberMat,0,1.72,.233);
- mesh(new THREE.PlaneGeometry(.36,.39),numberMat,0,1.72,-.233);
- for(let side of [-1,1]){for(let k=0;k<3;k++){mesh(new THREE.BoxGeometry(.025,.65,.014),materials.trim,side*(.24+k*.045),1.72,-.215);}}
- const limbs=[];
+ ell(0,2.535,-.224,.055,.096,.075,skinLight);
+ ell(0,2.47,-.236,.069,.043,.045,skin);
+ ell(0,2.398,-.155,.14,.046,.065,skin);
+ // Hair: close cropped sides and naturally shaped top, no spherical helmet
+ ell(0,2.853,.015,.243,.105,.229,hair);
+ ell(0,2.884,-.055,.226,.083,.189,hair);
+ for(let i=0;i<9;i++){let x=(i-4)*.047;ell(x,2.865+Math.sin(i*1.8)*.017,-.155,.047,.041,.074,hair)}
+ for(let side of [-1,1])ell(side*.216,2.76,.06,.029,.11,.125,hair);
+ // Eyes, brows, bridge, mouth
  for(let side of [-1,1]){
-  const leg=new THREE.Group();leg.position.set(side*.21,1.05,0);
-  limb(leg,[0,.04,0],[side*.015,-.38,0],.17,.13,materials.shorts);
-  ell(.145,.17,.14,materials.skin,side*.015,-.36,0,leg);
-  limb(leg,[side*.015,-.39,0],[side*.02,-.84,0],.13,.095,materials.sock);
-  ell(.17,.11,.30,materials.boot,side*.02,-.85,-.12,leg);
-  mesh(new THREE.BoxGeometry(.29,.025,.24),materials.white,side*.02,-.9,-.15,leg);
-  g.add(leg);limbs.push(leg);
-  const arm=new THREE.Group();arm.position.set(side*.40,2.08,0);
-  ell(.21,.19,.20,materials.shirt,side*.055,-.11,0,arm);
-  limb(arm,[side*.06,-.16,0],[side*.14,-.42,0],.13,.105,materials.shirt);
-  limb(arm,[side*.14,-.42,0],[side*.15,-.72,-.025],.105,.085,materials.skin);
-  ell(.11,.14,.09,materials.skin,side*.15,-.78,-.025,arm);
-  g.add(arm);limbs.push(arm);
+  ell(side*.097,2.646,-.215,.043,.022,.018,white);
+  ell(side*.098,2.645,-.231,.019,.021,.01,dark);
+  ell(side*.098,2.705,-.207,.065,.012,.016,hair);
+ }
+ box(0,2.433,-.221,.092,.012,.012,mat(0x805247));
+ // Real geometry for rectangular spectacles, lens, bridge, temples
+ if(blue){
+  for(const side of [-1,1]){
+   const x=side*.115,z=-.243,y=2.644;
+   box(x,y+.055,z,.19,.014,.017,glass);box(x,y-.055,z,.19,.014,.017,glass);
+   box(x-side*.094,y,z,.014,.11,.017,glass);box(x+side*.094,y,z,.014,.11,.017,glass);
+   box(x,y,z+.005,.173,.09,.006,lens);
+   line3([side*.212,y+.027,z+.01],[side*.248,y+.02,.09],.012,glass);
+  }
+  box(0,2.653,-.254,.049,.018,.019,glass);
+ }
+ // jersey stripes, collar, seams, and crest
+ const trim=mat(blue?0xdde8fa:0x1e2c41);
+ cyl(0,2.207,0,.158,.154,.035,trim).scale.z=.82;
+ for(let side of [-1,1]){
+  for(let k=0;k<3;k++){
+   const stripe=box(side*(.255+k*.032),2.074,-.226,.021,.22,.013,trim);stripe.rotation.z=side*.21;
+  }
+  box(side*.319,1.73,-.206,.014,.62,.013,trim);
+ }
+ // Textured numerals, front and back; explicit back orientation
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const cx=canvas.getContext('2d');cx.fillStyle='#ffffff';cx.textAlign='center';cx.font='900 170px Arial';cx.fillText(blue?'10':'1',128,185);
+ const nmat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(canvas),transparent:true,side:THREE.DoubleSide,depthWrite:false});
+ add(new THREE.PlaneGeometry(.32,.33),nmat,0,1.69,-.238);
+ const back=add(new THREE.PlaneGeometry(.4,.4),nmat,0,1.69,.238);back.rotation.y=Math.PI;
+ // Small crest patch
+ const crest=ell(-.19,1.99,-.244,.048,.06,.008,white);
+ ell(-.19,1.99,-.254,.025,.036,.006,mat(blue?0xd6333a:0x182e40));
+ for(const side of [-1,1]){
+  // hinged legs, tapering shorts, knees, socks and cleats
+  const leg=new THREE.Group();leg.position.set(side*.192,1.11,0);g.add(leg);
+  cyl(side*.015,-.175,0,.16,.137,.37,shorts,leg).scale.z=.92;
+  ell(side*.025,-.374,0,.119,.13,.12,skin,leg);
+  cyl(side*.03,-.59,0,.111,.081,.40,sock,leg);
+  ell(side*.03,-.785,-.083,.13,.095,.225,boot,leg);
+  box(side*.03,-.859,-.088,.23,.027,.36,white,leg);
+  for(let k=0;k<3;k++)box(side*.03,-.788,-.17+k*.065,.14,.009,.012,white,leg);
+  limbs.push(leg);
+  const arm=new THREE.Group();arm.position.set(side*.375,2.052,0);g.add(arm);
+  ell(side*.03,-.055,0,.16,.155,.175,shirt,arm);
+  cyl(side*.085,-.19,0,.136,.111,.27,shirt,arm);
+  ell(side*.108,-.33,0,.102,.108,.11,skin,arm);
+  cyl(side*.128,-.51,0,.097,.078,.31,skin,arm);
+  ell(side*.13,-.69,-.01,.09,.125,.077,skin,arm);
+  limbs.push(arm);
  }
  g.userData.limbs=limbs;
  return g;
